@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabel Periodik Interaktif</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #dbe1ea;
+    --accent: #4f46e5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  header {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    padding: 28px 20px;
+    text-align: center;
+  }
+
+  header h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+  }
+
+  header p {
+    margin: 0;
+    opacity: .9;
+  }
+
+  .container {
+    max-width: 1500px;
+    margin: auto;
+    padding: 22px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  #search {
+    flex: 1;
+    min-width: 240px;
+    padding: 12px 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    background: white;
+  }
+
+  #search:focus {
+    border-color: var(--accent);
+  }
+
+  button.action {
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  button.action:hover { opacity: .9; }
+
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .periodic-grid {
+    display: grid;
+    grid-template-columns: repeat(18, 58px);
+    grid-auto-rows: 68px;
+    gap: 5px;
+    min-width: 1129px;
+  }
+
+  .element {
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 8px;
+    padding: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform .12s, box-shadow .12s, opacity .2s;
+    color: #172033;
+    position: relative;
+  }
+
+  .element:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0,0,0,.15);
+    z-index: 2;
+  }
+
+  .element .number {
+    font-size: 10px;
+    text-align: left;
+    opacity: .65;
+  }
+
+  .element .symbol {
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 25px;
+  }
+
+  .element .name {
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .element.dimmed {
+    opacity: .14;
+    filter: grayscale(1);
+  }
+
+  /* Category colors */
+  .alkali { background: #ffd6d6; }
+  .alkaline { background: #ffe7b3; }
+  .transition { background: #fff4b8; }
+  .post-transition { background: #d9f5d0; }
+  .metalloid { background: #c9f0e6; }
+  .nonmetal { background: #cfe2ff; }
+  .halogen { background: #e2d5ff; }
+  .noble { background: #ffd2ef; }
+  .lanthanide { background: #d8f3ff; }
+  .actinide { background: #e5dcff; }
+
+  .series-label {
+    grid-column: 1 / span 3;
+    align-self: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--muted);
+  }
+
+  .info {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 20px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+  }
+
+  .big-symbol {
+    min-height: 180px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--border);
+  }
+
+  .big-symbol .s {
+    font-size: 58px;
+    font-weight: bold;
+  }
+
+  .big-symbol .z {
+    color: var(--muted);
+  }
+
+  .info h2 {
+    margin: 0 0 12px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .info-item {
+    background: #f8fafc;
+    border-radius: 9px;
+    padding: 10px 12px;
+  }
+
+  .info-item strong {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px 15px;
+    margin: 18px 0 0;
+    font-size: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .swatch {
+    width: 16px;
+    height: 16px;
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 4px;
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 10px 0 0;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 25px;
+  }
+
+  @media (max-width: 700px) {
+    header h1 { font-size: 24px; }
+    .container { padding: 12px; }
+    .info { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚛️ Tabel Periodik Interaktif</h1>
+  <p>Klik salah satu unsur untuk melihat informasi lengkapnya.</p>
+</header>
+
+<div class="container">
+
+  <div class="controls">
+    <input id="search" type="text" placeholder="🔎 Cari unsur berdasarkan nama atau simbol...">
+    <button class="action" onclick="randomElement()">🎲 Unsur Acak</button>
+    <button class="action" onclick="resetSearch()">↩ Reset</button>
+  </div>
+
+  <div class="table-wrap">
+    <div id="periodicGrid" class="periodic-grid"></div>
+    <div class="legend" id="legend"></div>
+    <p class="hint">💡 Coba klik H, O, Fe, Au, atau unsur lainnya.</p>
+  </div>
+
+  <section class="info" id="infoPanel">
+    <div class="big-symbol nonmetal">
+      <div class="s">?</div>
+      <div class="z">Pilih unsur</div>
+    </div>
+    <div>
+      <h2>Informasi Unsur</h2>
+      <p>Pilih salah satu kotak pada tabel periodik untuk menampilkan detailnya.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Tabel Periodik Interaktif — dibuat sebagai proyek pembelajaran kimia.
+</footer>
+
+<script>
+const elements = [
+  [1,"H","Hidrogen","1.008",1,1,"nonmetal","Bahan bakar dan pembuatan amonia"],
+  [2,"He","Helium","4.003",18,1,"noble","Balon dan pendingin"],
+  [3,"Li","Litium","6.94",1,2,"alkali","Baterai"],
+  [4,"Be","Berilium","9.012",2,2,"alkaline","Bahan paduan dan teknologi"],
+  [5,"B","Boron","10.81",13,2,"metalloid","Kaca dan bahan keramik"],
+  [6,"C","Karbon","12.011",14,2,"nonmetal","Pensil, bahan bakar, dan kehidupan"],
+  [7,"N","Nitrogen","14.007",15,2,"nonmetal","Pupuk dan atmosfer"],
+  [8,"O","Oksigen","15.999",16,2,"nonmetal","Pernapasan dan pengolahan air"],
+  [9,"F","Fluorin","18.998",17,2,"halogen","Produk perawatan gigi"],
+  [10,"Ne","Neon","20.180",18,2,"noble","Lampu neon"],
+  [11,"Na","Natrium","22.990",1,3,"alkali","Garam dan berbagai senyawa"],
+  [12,"Mg","Magnesium","24.305",2,3,"alkaline","Paduan logam dan kembang api"],
+  [13,"Al","Aluminium","26.982",13,3,"post-transition","Kaleng dan konstruksi"],
+  [14,"Si","Silikon","28.085",14,3,"metalloid","Chip komputer dan kaca"],
+  [15,"P","Fosfor","30.974",15,3,"nonmetal","Pupuk dan bahan biologis"],
+  [16,"S","Belerang","32.06",16,3,"nonmetal","Pupuk dan industri kimia"],
+  [17,"Cl","Klorin","35.45",17,3,"halogen","Pengolahan air"],
+  [18,"Ar","Argon","39.948",18,3,"noble","Pengelasan dan lampu"],
+  [19,"K","Kalium","39.098",1,4,"alkali","Pupuk"],
+  [20,"Ca","Kalsium","40.078",2,4,"alkaline","Tulang, gigi, dan bahan bangunan"],
+  [21,"Sc","Skandium","44.956",3,4,"transition","Paduan logam"],
+  [22,"Ti","Titanium","47.867",4,4,"transition","Implan dan material kuat"],
+  [23,"V","Vanadium","50.942",5,4,"transition","Paduan baja"],
+  [24,"Cr","Kromium","51.996",6,4,"transition","Pelapis logam"],
+  [25,"Mn","Mangan","54.938",7,4,"transition","Pembuatan baja"],
+  [26,"Fe","Besi","55.845",8,4,"transition","Baja dan konstruksi"],
+  [27,"Co","Kobalt","58.933",9,4,"transition","Baterai dan paduan"],
+  [28,"Ni","Nikel","58.693",10,4,"transition","Stainless steel dan koin"],
+  [29,"Cu","Tembaga","63.546",11,4,"transition","Kabel listrik"],
+  [30,"Zn","Seng","65.38",12,4,"transition","Pelapis logam dan paduan"],
+  [31,"Ga","Galium","69.723",13,4,"post-transition","Semikonduktor"],
+  [32,"Ge","Germanium","72.630",14,4,"metalloid","Semikonduktor"],
+  [33,"As","Arsen","74.922",15,4,"metalloid","Semikonduktor dan penelitian"],
+  [34,"Se","Selenium","78.971",16,4,"nonmetal","Elektronik dan kaca"],
+  [35,"Br","Bromin","79.904",17,4,"halogen","Bahan kimia industri"],
+  [36,"Kr","Kripton","83.798",18,4,"noble","Lampu khusus"],
+  [37,"Rb","Rubidium","85.468",1,5,"alkali","Penelitian dan teknologi"],
+  [38,"Sr","Stronsium","87.62",2,5,"alkaline","Piroteknik dan penelitian"],
+  [39,"Y","Itrium","88.906",3,5,"transition","Keramik dan teknologi"],
+  [40,"Zr","Zirkonium","91.224",4,5,"transition","Keramik dan material tahan panas"],
+  [41,"Nb","Niobium","92.906",5,5,"transition","Paduan logam"],
+  [42,"Mo","Molibdenum","95.95",6,5,"transition","Paduan baja"],
+  [43,"Tc","Teknesium","[98]",7,5,"transition","Penelitian dan kedokteran nuklir"],
+  [44,"Ru","Rutenium","101.07",8,5,"transition","Elektronik dan katalis"],
+  [45,"Rh","Rodium","102.91",9,5,"transition","Katalis kendaraan"],
+  [46,"Pd","Paladium","106.42",10,5,"transition","Katalis dan elektronik"],
+  [47,"Ag","Perak","107.87",11,5,"transition","Perhiasan dan elektronik"],
+  [48,"Cd","Kadmium","112.41",12,5,"transition","Baterai dan pelapis"],
+  [49,"In","Indium","114.82",13,5,"post-transition","Layar sentuh"],
+  [50,"Sn","Timah","118.71",14,5,"post-transition","Solder dan pelapis"],
+  [51,"Sb","Antimon","121.76",15,5,"metalloid","Paduan dan bahan tahan api"],
+  [52,"Te","Telurium","127.60",16,5,"metalloid","Semikonduktor"],
+  [53,"I","Iodin","126.90",17,5,"halogen","Kebutuhan medis dan nutrisi"],
+  [54,"Xe","Xenon","131.29",18,5,"noble","Lampu khusus"],
+  [55,"Cs","Sesium","132.91",1,6,"alkali","Jam atom dan penelitian"],
+  [56,"Ba","Barium","137.33",2,6,"alkaline","Keramik dan bahan medis"],
+  [57,"La","Lantanum","138.91",3,6,"lanthanide","Lensa dan baterai"],
+  [58,"Ce","Serium","140.12",4,8,"lanthanide","Bahan pemoles dan katalis"],
+  [59,"Pr","Praseodimium","140.91",5,8,"lanthanide","Magnet dan kaca"],
+  [60,"Nd","Neodimium","144.24",6,8,"lanthanide","Magnet kuat"],
+  [61,"Pm","Prometium","[145]",7,8,"lanthanide","Penelitian"],
+  [62,"Sm","Samarium","150.36",8,8,"lanthanide","Magnet dan penelitian"],
+  [63,"Eu","Europium","151.96",9,8,"lanthanide","Fosfor pada layar"],
+  [64,"Gd","Gadolinium","157.25",10,8,"lanthanide","Penelitian dan teknologi medis"],
+  [65,"Tb","Terbium","158.93",11,8,"lanthanide","Fosfor dan perangkat elektronik"],
+  [66,"Dy","Disprosium","162.50",12,8,"lanthanide","Magnet"],
+  [67,"Ho","Holmium","164.93",13,8,"lanthanide","Laser dan penelitian"],
+  [68,"Er","Erbium","167.26",14,8,"lanthanide","Serat optik"],
+  [69,"Tm","Tulium","168.93",15,8,"lanthanide","Penelitian dan laser"],
+  [70,"Yb","Iterbium","173.05",16,8,"lanthanide","Laser dan penelitian"],
+  [71,"Lu","Lutesium","174.97",17,8,"lanthanide","Penelitian dan teknologi medis"],
+  [72,"Hf","Hafnium","178.49",4,6,"transition","Paduan dan teknologi"],
+  [73,"Ta","Tantalum","180.95",5,6,"transition","Komponen elektronik"],
+  [74,"W","Wolfram","183.84",6,6,"transition","Material tahan panas"],
+  [75,"Re","Renium","186.21",7,6,"transition","Paduan suhu tinggi"],
+  [76,"Os","Osmium","190.23",8,6,"transition","Paduan dan penelitian"],
+  [77,"Ir","Iridium","192.22",9,6,"transition","Peralatan khusus"],
+  [78,"Pt","Platina","195.08",10,6,"transition","Perhiasan dan katalis"],
+  [79,"Au","Emas","196.97",11,6,"transition","Perhiasan dan elektronik"],
+  [80,"Hg","Merkuri","200.59",12,6,"transition","Instrumen ilmiah"],
+  [81,"Tl","Talium","204.38",13,6,"post-transition","Penelitian dan teknologi"],
+  [82,"Pb","Timbal","207.2",14,6,"post-transition","Baterai dan pelindung radiasi"],
+  [83,"Bi","Bismut","208.98",15,6,"post-transition","Paduan dan produk industri"],
+  [84,"Po","Polonium","[209]",16,6,"post-transition","Penelitian"],
+  [85,"At","Astatin","[210]",17,6,"halogen","Penelitian"],
+  [86,"Rn","Radon","[222]",18,6,"noble","Penelitian"],
+  [87,"Fr","Fransium","[223]",1,7,"alkali","Penelitian"],
+  [88,"Ra","Radium","[226]",2,7,"alkaline","Penelitian"],
+  [89,"Ac","Aktinium","[227]",3,7,"actinide","Penelitian"],
+  [90,"Th","Torium","232.04",4,9,"actinide","Penelitian dan energi"],
+  [91,"Pa","Protaktinium","231.04",5,9,"actinide","Penelitian"],
+  [92,"U","Uranium","238.03",6,9,"actinide","Energi dan penelitian"],
+  [93,"Np","Neptunium","[237]",7,9,"actinide","Penelitian"],
+  [94,"Pu","Plutonium","[244]",8,9,"actinide","Penelitian"],
+  [95,"Am","Amerisium","[243]",9,9,"actinide","Penelitian dan alat ukur"],
+  [96,"Cm","Kurium","[247]",10,9,"actinide","Penelitian"],
+  [97,"Bk","Berkelium","[247]",11,9,"actinide","Penelitian"],
+  [98,"Cf","Kalifornium","[251]",12,9,"actinide","Penelitian"],
+  [99,"Es","Einsteinium","[252]",13,9,"actinide","Penelitian"],
+  [100,"Fm","Fermium","[257]",14,9,"actinide","Penelitian"],
+  [101,"Md","Mendelevium","[258]",15,9,"actinide","Penelitian"],
+  [102,"No","Nobelium","[259]",16,9,"actinide","Penelitian"],
+  [103,"Lr","Lawrensium","[262]",17,9,"actinide","Penelitian"],
+  [104,"Rf","Rutherfordium","[267]",4,7,"transition","Penelitian"],
+  [105,"Db","Dubnium","[268]",5,7,"transition","Penelitian"],
+  [106,"Sg","Seaborgium","[269]",6,7,"transition","Penelitian"],
+  [107,"Bh","Bohrium","[270]",7,7,"transition","Penelitian"],
+  [108,"Hs","Hassium","[277]",8,7,"transition","Penelitian"],
+  [109,"Mt","Meitnerium","[278]",9,7,"transition","Penelitian"],
+  [110,"Ds","Darmstadtium","[281]",10,7,"transition","Penelitian"],
+  [111,"Rg","Roentgenium","[282]",11,7,"transition","Penelitian"],
+  [112,"Cn","Kopernisium","[285]",12,7,"transition","Penelitian"],
+  [113,"Nh","Nihonium","[286]",13,7,"post-transition","Penelitian"],
+  [114,"Fl","Flerovium","[289]",14,7,"post-transition","Penelitian"],
+  [115,"Mc","Moskovium","[290]",15,7,"post-transition","Penelitian"],
+  [116,"Lv","Livermorium","[293]",16,7,"post-transition","Penelitian"],
+  [117,"Ts","Tenesin","[294]",17,7,"halogen","Penelitian"],
+  [118,"Og","Oganeson","[294]",18,7,"noble","Penelitian"]
+];
+
+const categoryNames = {
+  alkali: "Logam alkali",
+  alkaline: "Logam alkali tanah",
+  transition: "Logam transisi",
+  "post-transition": "Logam pascatransisi",
+  metalloid: "Metaloid",
+  nonmetal: "Nonlogam",
+  halogen: "Halogen",
+  noble: "Gas mulia",
+  lanthanide: "Lantanida",
+  actinide: "Aktinida"
+};
+
+const grid = document.getElementById("periodicGrid");
+const infoPanel = document.getElementById("infoPanel");
+const search = document.getElementById("search");
+
+function makeElement(el) {
+  const [z, symbol, name, mass, group, period, category] = el;
+  const div = document.createElement("button");
+  div.className = `element ${category}`;
+  div.dataset.name = name.toLowerCase();
+  div.dataset.symbol = symbol.toLowerCase();
+  div.dataset.z = z;
+  div.style.gridColumn = group;
+  div.style.gridRow = period;
+  div.innerHTML = `
+    <div class="number">${z}</div>
+    <div class="symbol">${symbol}</div>
+    <div class="name">${name}</div>
+  `;
+  div.addEventListener("click", () => showInfo(el));
+  return div;
+}
+
+function buildTable() {
+  grid.innerHTML = "";
+
+  elements.forEach(el => {
+    const [z, symbol, name, mass, group, period] = el;
+
+    // Lantanida dan aktinida ditampilkan pada baris khusus di bawah tabel.
+    if (period === 8 || period === 9) return;
+
+    grid.appendChild(makeElement(el));
+  });
+
+  // Baris lantanida
+  const lanLabel = document.createElement("div");
+  lanLabel.className = "series-label";
+  lanLabel.style.gridColumn = "1 / span 3";
+  lanLabel.style.gridRow = "8";
+  lanLabel.textContent = "Lantanida →";
+  grid.appendChild(lanLabel);
+
+  elements.filter(e => e[5] === 8).forEach(el => {
+    const card = makeElement(el);
+    card.style.gridRow = "8";
+    card.style.gridColumn = (el[4] - 3);
+    grid.appendChild(card);
+  });
+
+  // Baris aktinida
+  const actLabel = document.createElement("div");
+  actLabel.className = "series-label";
+  actLabel.style.gridColumn = "1 / span 3";
+  actLabel.style.gridRow = "9";
+  actLabel.textContent = "Aktinida →";
+  grid.appendChild(actLabel);
+
+  elements.filter(e => e[5] === 9).forEach(el => {
+    const card = makeElement(el);
+    card.style.gridRow = "9";
+    card.style.gridColumn = (el[4] - 3);
+    grid.appendChild(card);
+  });
+}
+
+function showInfo(el) {
+  const [z, symbol, name, mass, group, period, category, use] = el;
+
+  infoPanel.innerHTML = `
+    <div class="big-symbol ${category}">
+      <div class="s">${symbol}</div>
+      <div class="z">Nomor atom: ${z}</div>
+    </div>
+    <div>
+      <h2>${name} (${symbol})</h2>
+      <div class="info-grid">
+        <div class="info-item"><strong>Nomor atom</strong>${z}</div>
+        <div class="info-item"><strong>Massa atom relatif</strong>${mass}</div>
+        <div class="info-item"><strong>Golongan</strong>${group}</div>
+        <div class="info-item"><strong>Periode</strong>${period <= 7 ? period : (period === 8 ? "Lantanida" : "Aktinida")}</div>
+        <div class="info-item"><strong>Kategori</strong>${categoryNames[category]}</div>
+        <div class="info-item"><strong>Contoh kegunaan</strong>${use}</div>
+      </div>
+    </div>
+  `;
+
+  infoPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function randomElement() {
+  const el = elements[Math.floor(Math.random() * elements.length)];
+  search.value = "";
+  document.querySelectorAll(".element").forEach(x => x.classList.remove("dimmed"));
+  showInfo(el);
+}
+
+function resetSearch() {
+  search.value = "";
+  document.querySelectorAll(".element").forEach(x => x.classList.remove("dimmed"));
+}
+
+search.addEventListener("input", () => {
+  const q = search.value.toLowerCase().trim();
+
+  document.querySelectorAll(".element").forEach(card => {
+    const match =
+      card.dataset.name.includes(q) ||
+      card.dataset.symbol.includes(q) ||
+      card.dataset.z === q;
+
+    card.classList.toggle("dimmed", q !== "" && !match);
+  });
+});
+
+function buildLegend() {
+  const legend = document.getElementById("legend");
+  Object.entries(categoryNames).forEach(([key, name]) => {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.innerHTML = `<span class="swatch ${key}"></span>${name}`;
+    legend.appendChild(item);
+  });
+}
+
+buildTable();
+buildLegend();
+showInfo(elements[0]);
+</script>
+
+</body>
+</html>
